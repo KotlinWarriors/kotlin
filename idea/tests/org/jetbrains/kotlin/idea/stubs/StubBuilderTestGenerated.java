@@ -59,6 +59,11 @@ public class StubBuilderTestGenerated extends AbstractStubBuilderTest {
         runTest("idea/testData/stubs/AnnotationsOnPrimaryCtr.kt");
     }
 
+    @TestMetadata("AnnotationValues.kt")
+    public void testAnnotationValues() throws Exception {
+        runTest("idea/testData/stubs/AnnotationValues.kt");
+    }
+
     @TestMetadata("AnonymousObject.kt")
     public void testAnonymousObject() throws Exception {
         runTest("idea/testData/stubs/AnonymousObject.kt");
