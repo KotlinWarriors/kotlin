@@ -35,9 +35,12 @@ import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.project.DumbService
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.ProjectRootManager
+import com.intellij.openapi.ui.InputValidatorEx
+import com.intellij.openapi.util.text.StringUtil
 import com.intellij.psi.PsiDirectory
 import com.intellij.psi.PsiFile
 import com.intellij.util.IncorrectOperationException
+import org.jetbrains.annotations.TestOnly
 import org.jetbrains.kotlin.idea.KotlinFileType
 import org.jetbrains.kotlin.idea.KotlinIcons
 import org.jetbrains.kotlin.idea.util.application.runWriteAction
@@ -86,6 +89,8 @@ class NewKotlinFileAction : CreateFileFromTemplateAction(
             .addKind("Interface", KotlinIcons.INTERFACE, "Kotlin Interface")
             .addKind("Enum class", KotlinIcons.ENUM, "Kotlin Enum")
             .addKind("Object", KotlinIcons.OBJECT, "Kotlin Object")
+
+        builder.setValidator(NameValidator)
     }
 
     override fun getActionName(directory: PsiDirectory, newName: String, templateName: String) = "Kotlin File/Class"
@@ -114,7 +119,34 @@ class NewKotlinFileAction : CreateFileFromTemplateAction(
         Companion.createFileFromTemplate(name, template, dir)
 
     companion object {
-        private fun findOrCreateTarget(dir: PsiDirectory, name: String, directorySeparators: Array<Char>): Pair<String, PsiDirectory> {
+        private object NameValidator : InputValidatorEx {
+            override fun getErrorText(inputString: String): String? {
+                if (inputString.trim().isEmpty()) {
+                    return "Name can't be empty"
+                }
+
+                val parts: List<String> = inputString.split(*FQNAME_SEPARATORS)
+                if (parts.any { it.trim().isEmpty() }) {
+                    return "Name can't have empty parts"
+                }
+
+                return null
+            }
+
+            override fun checkInput(inputString: String): Boolean {
+                return true
+            }
+
+            override fun canClose(inputString: String): Boolean {
+                return !StringUtil.isEmptyOrSpaces(inputString) && getErrorText(inputString) == null
+            }
+        }
+
+        @get:TestOnly
+        val nameValidator: InputValidatorEx
+            get() = NameValidator
+
+        private fun findOrCreateTarget(dir: PsiDirectory, name: String, directorySeparators: CharArray): Pair<String, PsiDirectory> {
             var className = name.substringBeforeLast(".kt")
             var targetDir = dir
 
@@ -157,8 +189,11 @@ class NewKotlinFileAction : CreateFileFromTemplateAction(
             return element?.containingFile
         }
 
+        private val FILE_SEPARATORS = charArrayOf('/', '\\')
+        private val FQNAME_SEPARATORS = charArrayOf('/', '\\', '.')
+
         fun createFileFromTemplate(name: String, template: FileTemplate, dir: PsiDirectory): PsiFile? {
-            val directorySeparators = if (template.name == "Kotlin File") arrayOf('/', '\\') else arrayOf('/', '\\', '.')
+            val directorySeparators = if (template.name == "Kotlin File") FILE_SEPARATORS else FQNAME_SEPARATORS
             val (className, targetDir) = findOrCreateTarget(dir, name, directorySeparators)
 
             val service = DumbService.getInstance(dir.project)
