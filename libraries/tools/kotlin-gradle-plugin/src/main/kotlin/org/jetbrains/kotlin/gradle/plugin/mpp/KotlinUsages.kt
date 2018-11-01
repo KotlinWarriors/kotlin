@@ -12,6 +12,7 @@ import org.jetbrains.kotlin.gradle.plugin.KotlinPlatformType.androidJvm
 import org.jetbrains.kotlin.gradle.plugin.KotlinPlatformType.jvm
 import org.jetbrains.kotlin.gradle.plugin.KotlinTarget
 import org.jetbrains.kotlin.gradle.plugin.usageByName
+import org.jetbrains.kotlin.gradle.utils.isGradleVersionAtLeast
 
 object KotlinUsages {
     const val KOTLIN_API = "kotlin-api"
